@@ -18,6 +18,8 @@ Use English comma-separated tags. Include:
 ## Important Rules
 - Do not execute all steps at once. Wait for user confirmation at each stage.
 - Always show the generated lyrics to the user before proceeding to style selection.
+- After the music tool returns, do not reproduce raw audio URLs or Markdown links. The application renders playback and download controls separately.
+- After generation, briefly describe the result and let the application display the audio cards and lyrics.
 - If the user requests instrumental only, set lyrics to "[instrumental]".
 - Maintain a friendly, professional tone.
 """

@@ -1,8 +1,48 @@
+import json
+from pathlib import PurePosixPath
+from urllib.parse import urljoin
+
 from langchain_core.tools import tool
 from config.settings import ACE_STEP_REMOTE_URL
 from core.ace_step_client import ACEStepRemoteClient
 
 ace_client = ACEStepRemoteClient(base_url=ACE_STEP_REMOTE_URL)
+
+
+def _format_generation_result(result: dict) -> str:
+    """Return a compact JSON payload that the web UI can render as audio cards."""
+    raw_tracks = result.get("result", [])
+    if isinstance(raw_tracks, str):
+        try:
+            raw_tracks = json.loads(raw_tracks)
+        except json.JSONDecodeError:
+            raw_tracks = []
+
+    tracks = []
+    for index, track in enumerate(raw_tracks if isinstance(raw_tracks, list) else [], 1):
+        if not isinstance(track, dict) or not track.get("file"):
+            continue
+
+        file_url = track["file"]
+        audio_url = urljoin(f"{ACE_STEP_REMOTE_URL.rstrip('/')}/", file_url.lstrip("/"))
+        filename = PurePosixPath(file_url.split("?", 1)[0]).name or f"music-{index}.wav"
+        metas = track.get("metas") or {}
+        tracks.append({
+            "index": index,
+            "audio_url": audio_url,
+            "filename": filename,
+            "duration": metas.get("duration"),
+            "bpm": metas.get("bpm"),
+            "key": metas.get("keyscale"),
+            "lyrics": track.get("lyrics") or metas.get("lyrics", ""),
+            "status": track.get("stage", "succeeded"),
+        })
+
+    return json.dumps({
+        "type": "music_generation",
+        "status": result.get("status", "success"),
+        "tracks": tracks,
+    }, ensure_ascii=False)
 
 
 @tool
@@ -27,6 +67,10 @@ def generate_music(lyrics: str, style_tags: str, duration: int = 120) -> str:
 
     try:
         result = ace_client.generate_music(payload)
-        return f"Music generated successfully! Result: {result}"
+        return _format_generation_result(result)
     except Exception as e:
-        return f"Generation failed (ACE-Step at {ACE_STEP_REMOTE_URL}): {e}"
+        return json.dumps({
+            "type": "music_generation",
+            "status": "error",
+            "error": f"Generation failed (ACE-Step at {ACE_STEP_REMOTE_URL}): {e}",
+        }, ensure_ascii=False)

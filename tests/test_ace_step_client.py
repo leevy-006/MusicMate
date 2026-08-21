@@ -1,4 +1,5 @@
 import os
+import json
 import unittest
 
 from core.ace_step_client import ACEStepRemoteClient
@@ -33,18 +34,29 @@ class ACEStepResponseNormalizationTest(unittest.TestCase):
 
 class GenerateMusicToolResultTest(unittest.TestCase):
     def test_generate_music_tool_extracts_stage_and_file(self):
+        import core.tools as tools_module
         from core.tools import ace_client, generate_music
 
         fake_result = {
             "status": 1,
-            "result": '[{"file": "/v1/audio?path=/workspace/audio.mp3", "stage": "succeeded"}]'
+            "result": '[{"file": "/v1/audio?path=/workspace/audio.mp3", "stage": "succeeded", "lyrics": "[verse]\\nDemo"}]'
         }
         ace_client.generate_music = lambda payload: fake_result
 
-        output = generate_music("lyrics", "pop", duration=120)
-        self.assertIn("stage_1: succeeded", output)
-        self.assertIn("file_1: /v1/audio?path=/workspace/audio.mp3", output)
-        self.assertIn("audio_url_1:", output)
+        output = generate_music.invoke({
+            "lyrics": "lyrics",
+            "style_tags": "pop",
+            "duration": 120,
+        })
+        result = json.loads(output)
+        self.assertEqual(result["type"], "music_generation")
+        self.assertEqual(result["status"], 1)
+        self.assertEqual(result["tracks"][0]["status"], "succeeded")
+        self.assertEqual(
+            result["tracks"][0]["audio_url"],
+            f"{tools_module.ACE_STEP_REMOTE_URL}/v1/audio?path=/workspace/audio.mp3",
+        )
+        self.assertEqual(result["tracks"][0]["lyrics"], "[verse]\nDemo")
 
 
 if __name__ == "__main__":

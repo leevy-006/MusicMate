@@ -69,11 +69,68 @@
         }
         .message.tool {
             align-self: flex-start;
-            background: #1a2e1a;
-            border: 1px solid #2d4a2d;
-            font-size: 13px;
-            color: #7ddf7d;
+            width: min(720px, 90%);
+            max-width: 90%;
+            padding: 0;
+            background: transparent;
+            border: none;
         }
+        .music-card {
+            padding: 16px;
+            background: #18221c;
+            border: 1px solid #315338;
+            border-radius: 12px;
+            color: #d9f3dc;
+        }
+        .music-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .music-card-title { font-size: 14px; font-weight: 600; }
+        .music-card-status { color: #8ee49a; font-size: 12px; }
+        .music-card audio { width: 100%; margin-bottom: 12px; }
+        .music-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            color: #a8c8ad;
+            font-size: 12px;
+            margin-bottom: 14px;
+        }
+        .lyrics-details {
+            margin: 0 0 14px;
+            color: #c6e4ca;
+            font-size: 13px;
+        }
+        .lyrics-details summary {
+            cursor: pointer;
+            color: #8ee49a;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .lyrics-text {
+            max-height: 240px;
+            overflow-y: auto;
+            padding: 10px 12px;
+            background: #101812;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        .download-link {
+            display: inline-block;
+            color: #fff;
+            background: #287a38;
+            border-radius: 6px;
+            padding: 8px 12px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .download-link:hover { background: #359448; }
         .message.error {
             align-self: flex-start;
             background: #2e1a1a;
@@ -178,6 +235,54 @@
             return div;
         }
 
+        function appendMusicResult(output) {
+            let result;
+            try {
+                result = JSON.parse(output);
+            } catch (e) {
+                appendMessage('tool', output);
+                return;
+            }
+
+            if (result.type !== 'music_generation') {
+                appendMessage('tool', output);
+                return;
+            }
+            if (result.status === 'error') {
+                appendMessage('error', result.error || 'Music generation failed.');
+                return;
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'message tool';
+            result.tracks.forEach((track) => {
+                const card = document.createElement('section');
+                card.className = 'music-card';
+                const duration = track.duration ? `${track.duration}s` : 'Unknown duration';
+                const bpm = track.bpm ? `${track.bpm} BPM` : 'BPM unavailable';
+                const key = track.key || 'Key unavailable';
+                const lyrics = track.lyrics
+                    ? `<details class="lyrics-details"><summary>View lyrics</summary><div class="lyrics-text"></div></details>`
+                    : '';
+                card.innerHTML = `
+                    <div class="music-card-header">
+                        <span class="music-card-title">Generated track ${track.index}</span>
+                        <span class="music-card-status">${track.status}</span>
+                    </div>
+                    <audio controls preload="metadata" src="${track.audio_url}"></audio>
+                    <div class="music-card-meta">
+                        <span>WAV</span><span>${duration}</span><span>${bpm}</span><span>${key}</span>
+                    </div>
+                    ${lyrics}
+                `;
+                const lyricsText = card.querySelector('.lyrics-text');
+                if (lyricsText) lyricsText.textContent = track.lyrics;
+                wrapper.appendChild(card);
+            });
+            chatArea.appendChild(wrapper);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
         async function sendMessage() {
             const text = userInput.value.trim();
             if (!text) return;
@@ -224,7 +329,7 @@
                                     agentDiv.textContent += data.token;
                                     chatArea.scrollTop = chatArea.scrollHeight;
                                 } else if (eventType === 'tool_result') {
-                                    appendMessage('tool', data.output);
+                                    appendMusicResult(data.output);
                                 } else if (eventType === 'error') {
                                     appendMessage('error', data.error);
                                 }

@@ -10,6 +10,17 @@ router = APIRouter(tags=["chat"])
 
 active_graphs: dict[str, MusicAgentGraph] = {}
 
+
+def _tool_output_content(output) -> str:
+    """Extract the tool payload instead of serializing the ToolMessage wrapper."""
+    content = getattr(output, "content", output)
+    if isinstance(content, list):
+        content = "".join(
+            item.get("text", "") if isinstance(item, dict) else str(item)
+            for item in content
+        )
+    return str(content)
+
 def get_or_create_graph(session_id: str, provider: str) -> MusicAgentGraph:
     """Get an existing MusicAgentGraph for the session or create a new one."""
     graph = active_graphs.get(session_id)
@@ -61,7 +72,9 @@ async def chat(request: Request):
                     tool_output = event["data"].get("output", "")
                     yield {
                         "event": "tool_result",
-                        "data": json.dumps({"output": str(tool_output)}),
+                        "data": json.dumps({
+                            "output": _tool_output_content(tool_output),
+                        }),
                     }
 
             yield {"event": "done", "data": json.dumps({"session_id": session_id})}
