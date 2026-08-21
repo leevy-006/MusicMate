@@ -12,7 +12,8 @@ active_graphs: dict[str, MusicAgentGraph] = {}
 
 def get_or_create_graph(session_id: str, provider: str) -> MusicAgentGraph:
     """Get an existing MusicAgentGraph for the session or create a new one."""
-    if session_id not in active_graphs:
+    graph = active_graphs.get(session_id)
+    if graph is None or graph.llm_provider != provider:
         active_graphs[session_id] = MusicAgentGraph(llm_provider=provider)
     return active_graphs[session_id]
 

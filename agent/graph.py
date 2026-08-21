@@ -18,6 +18,7 @@ class MusicAgentGraph:
     """Builds and compiles the LangGraph workflow for the music agent."""
 
     def __init__(self, llm_provider: str = "deepseek", max_history_messages: int = 20):
+        self.llm_provider = llm_provider
         self.max_history_messages = max_history_messages
         self.llm = LLMFactory.get_llm(llm_provider, max_tokens=2000)
         self.tools = [generate_music]

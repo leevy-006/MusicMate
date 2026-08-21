@@ -22,6 +22,7 @@ def generate_music(lyrics: str, style_tags: str, duration: int = 120) -> str:
         "lyrics": lyrics,
         "tags": style_tags,
         "duration": duration,
+        "audio_format": "wav",
     }
 
     try:
