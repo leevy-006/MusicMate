@@ -1,0 +1,16 @@
+[project]
+name = "music-agent"
+version = "0.1.0"
+description = "AI Music Production Agent based on LangGraph and ACE-Step 1.5"
+requires-python = ">=3.10"
+dependencies = [
+    "langchain>=0.3.0",
+    "langchain-openai>=0.2.0",
+    "langchain-core>=0.3.0",
+    "langgraph>=0.2.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "sse-starlette>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "requests>=2.32.0",
+]
