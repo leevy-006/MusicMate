@@ -4,7 +4,7 @@ from config.settings import LLM_CONFIGS
 
 class LLMFactory:
     @staticmethod
-    def get_llm(model_name: str, temperature: float = 0.7) -> ChatOpenAI:
+    def get_llm(model_name: str, temperature: float = 0.7, max_tokens: int = 2000) -> ChatOpenAI:
         """
         Get the corresponding LLM instance based on the model name.
         All providers use the OpenAI-compatible protocol.
@@ -19,5 +19,8 @@ class LLMFactory:
             openai_api_key=config["api_key"],
             openai_api_base=config["base_url"],
             temperature=temperature,
+            max_tokens=max_tokens,
             streaming=True,
+            timeout=60,
+            max_retries=2,
         )

@@ -10,7 +10,7 @@ LLM_CONFIGS = {
         "base_url": "https://integrate.api.nvidia.com/v1",
     },
     "deepseek": {
-        "model": "deepseek-ai/deepseek-v4-pro",
+        "model": "deepseek-ai/deepseek-v4-flash-0731",
         "api_key": os.getenv("DEEPSEEK_API_KEY"),
         "base_url": "https://integrate.api.nvidia.com/v1",
     },
@@ -19,6 +19,11 @@ LLM_CONFIGS = {
         "api_key": os.getenv("MINIMAX_API_KEY"),
         "base_url": "https://integrate.api.nvidia.com/v1",
     },
+    "openAI": {
+        "model": "openai/gpt-oss-120b",
+        "api_key": os.getenv("OPENAI_API_KEY"),
+        "base_url": "https://integrate.api.nvidia.com/v1",
+    },    
 }
 
 # ACE_STEP_REMOTE_URL = os.getenv("ACE_STEP_URL", "http://lees-mac-mini.local:7860")

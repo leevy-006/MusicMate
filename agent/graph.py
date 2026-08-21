@@ -17,17 +17,24 @@ class AgentState(TypedDict):
 class MusicAgentGraph:
     """Builds and compiles the LangGraph workflow for the music agent."""
 
-    def __init__(self, llm_provider: str = "deepseek"):
-        self.llm = LLMFactory.get_llm(llm_provider)
+    def __init__(self, llm_provider: str = "deepseek", max_history_messages: int = 20):
+        self.max_history_messages = max_history_messages
+        self.llm = LLMFactory.get_llm(llm_provider, max_tokens=2000)
         self.tools = [generate_music]
         self.llm_with_tools = self.llm.bind_tools(self.tools)
         self.compiled_graph = self.build()
+
+    def _prepare_messages(self, messages):
+        if len(messages) <= self.max_history_messages:
+            return messages
+        return messages[-self.max_history_messages:]
 
     def build(self):
         workflow = StateGraph(AgentState)
 
         def agent_node(state):
-            messages = [SystemMessage(content=MUSIC_AGENT_SYSTEM_PROMPT)] + state["messages"]
+            recent_messages = self._prepare_messages(state["messages"])
+            messages = [SystemMessage(content=MUSIC_AGENT_SYSTEM_PROMPT)] + recent_messages
             response = self.llm_with_tools.invoke(messages)
             return {"messages": [response]}
 
